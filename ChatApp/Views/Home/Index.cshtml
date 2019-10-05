@@ -1,0 +1,28 @@
+﻿@inject Microsoft.AspNetCore.Identity.UserManager<ChatUser> _userManager
+@inject Microsoft.AspNetCore.Identity.SignInManager<ChatUser> _signInManager
+
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+@if (!_signInManager.IsSignedIn(User))
+{
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Please <a asp-controller="Account" asp-action="Login">login</a> to see online friends.</p>
+</div>
+}
+else
+{
+    <div class="row">
+        <div class="col-2">
+            @{ 
+                
+            }
+        </div>
+        <div class="col-10">
+            test
+        </div>
+    </div>
+}
+
