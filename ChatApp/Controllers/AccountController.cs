@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 
 using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
+using System.Security.Claims;
+using ChatApp.Data;
 
 namespace ChatApp.Controllers
 {
@@ -16,11 +18,13 @@ namespace ChatApp.Controllers
     {
         private UserManager<ChatUser> _userManager;
         private SignInManager<ChatUser> _signInManager;
+        private ApplicationDbContext _dbContext;
 
-        public AccountController(UserManager<ChatUser> UserManager, SignInManager<ChatUser> SignInManager)
+        public AccountController(UserManager<ChatUser> UserManager, SignInManager<ChatUser> SignInManager, ApplicationDbContext DBContext)
         {
             _userManager = UserManager;
             _signInManager = SignInManager;
+            _dbContext = DBContext;
         }
 
         [HttpGet]
@@ -78,6 +82,17 @@ namespace ChatApp.Controllers
         {
             await _signInManager.SignOutAsync();
             return RedirectToAction("Index", "Home");
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task UpdateActiveTime()
+        {
+            ChatUser user = await _userManager.GetUserAsync(User);
+            user.LastActive = DateTime.UtcNow;
+            _dbContext.Users.Update(user);
+            await _dbContext.SaveChangesAsync();
+            ;
         }
     }
 }

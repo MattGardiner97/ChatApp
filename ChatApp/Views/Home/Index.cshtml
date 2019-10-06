@@ -2,26 +2,51 @@
 @inject Microsoft.AspNetCore.Identity.SignInManager<ChatUser> _signInManager
 
 @{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Home - ChatApp";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Scripts
+{
+    <script>
+        function AddFriend_Click() {
+            $.post("/Friends/Add", { Username: $("#AddFriendUsername").val() }, function (result) {
+                alert(result);
+            });
+        }
+
+        $(document).ready(function () {
+            $.post("/Account/UpdateActiveTime");
+            setInterval(function () {
+                $.post("/Account/UpdateActiveTime");
+            }, 30000)
+        });
+
+    </script>
 }
 
 @if (!_signInManager.IsSignedIn(User))
 {
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Please <a asp-controller="Account" asp-action="Login">login</a> to see online friends.</p>
-</div>
+    <div class="text-center">
+        <h1 class="display-4">Welcome</h1>
+        <p>Please <a asp-controller="Account" asp-action="Login">login</a> to see online friends.</p>
+    </div>
 }
 else
 {
     <div class="row">
         <div class="col-2">
-            @{ 
-                
-            }
+
+            <div class="form-inline">
+
+                <input id="AddFriendUsername" class="form-control" type="text" name="AddFriendUsername" placeholder="Username" />
+
+                <button class="btn btn-primary" onclick="AddFriend_Click()">Add User</button>
+
+            </div>
         </div>
         <div class="col-10">
-            test
+
         </div>
     </div>
 }

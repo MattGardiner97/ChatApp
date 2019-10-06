@@ -20,9 +20,6 @@ namespace ChatApp.Data
         {
             b.Entity<ChatUser>().HasKey(f => f.Id);
 
-            b.Entity<Friendship>().HasKey(f => new { f.User1ID, f.user2ID });
-            b.Entity<Friendship>().HasOne(f => f.User1).WithMany(c => c.Friends).HasForeignKey(f => f.User1ID).OnDelete(DeleteBehavior.NoAction);
-
             base.OnModelCreating(b);
         }
     }
