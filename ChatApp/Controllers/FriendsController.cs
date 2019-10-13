@@ -3,9 +3,12 @@ using ChatApp.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace ChatApp.Controllers
@@ -18,6 +21,13 @@ namespace ChatApp.Controllers
             public int ID { get; set; }
             public string Username { get; set; }
             public DateTime LastActive { get; set; }
+
+            public Friend(int ID, string Username, DateTime LastActive)
+            {
+                this.ID = ID;
+                this.Username = Username;
+                this.LastActive = LastActive;
+            }
         }
 
         private UserManager<ChatUser> _userManager;
@@ -31,25 +41,36 @@ namespace ChatApp.Controllers
 
         public async Task<Friend[]> GetFriends()
         {
-            ChatUser currentUser = await _userManager.GetUserAsync(User);
-            Friend[] result = currentUser.GetFriendsList(_userManager.Users).Select(x => new Friend { ID = x.Id, Username = x.UserName, LastActive = x.LastActive }).ToArray();
-            
-            return result;
+            //ChatUser currentUser = await _userManager.GetUserAsync(User);
+            int currentUserID = GetCurrentUserID();
+            var result = _dbContext.Users.Include(user => user.Friendships).ThenInclude(fs => fs.Friend).Single(x => x.Id == currentUserID);
+            return result.Friendships.Select(x => new Friend(x.FriendID, x.Friend.UserName, x.Friend.LastActive)).ToArray();
+
+            throw new Exception();
+            return null;
         }
 
         public async Task<string> Add(string Username)
         {
-            ChatUser newUser = await _userManager.FindByNameAsync(Username);
-            if (newUser == null)
-                return "User does not exist";
+            ChatUser owner = await _userManager.GetUserAsync(User);
+            ChatUser friend = await _userManager.FindByNameAsync(Username);
 
-            ChatUser currentUser = await _userManager.GetUserAsync(User);
-            if(currentUser.AddFriend(newUser) == false)
-                return "User already on your friend list";
+            Friendship ownerFriendship = new Friendship(owner, friend);
+            Friendship otherFriendship = new Friendship(friend, owner);
+
+            _dbContext.Friendships.Add(ownerFriendship);
+            _dbContext.Friendships.Add(otherFriendship);
             await _dbContext.SaveChangesAsync();
+
+            throw new Exception();
 
 
             return "";
+        }
+
+        private int GetCurrentUserID()
+        {
+            return int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
         }
 
     }
