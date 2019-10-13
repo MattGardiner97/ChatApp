@@ -32,21 +32,20 @@ namespace ChatApp.Controllers
         public async Task<Friend[]> GetFriends()
         {
             ChatUser currentUser = await _userManager.GetUserAsync(User);
-            IEnumerable<ChatUser> friends = _userManager.Users.Where(x => currentUser.FriendIDs.Contains(x.Id));
-            Friend[] result = friends.Select(x => new Friend { ID = x.Id, Username = x.UserName, LastActive = x.LastActive }).ToArray();
-
+            Friend[] result = currentUser.GetFriendsList(_userManager.Users).Select(x => new Friend { ID = x.Id, Username = x.UserName, LastActive = x.LastActive }).ToArray();
             
             return result;
         }
 
         public async Task<string> Add(string Username)
         {
-            ChatUser user = await _userManager.FindByNameAsync(Username);
-            if (user == null)
+            ChatUser newUser = await _userManager.FindByNameAsync(Username);
+            if (newUser == null)
                 return "User does not exist";
 
             ChatUser currentUser = await _userManager.GetUserAsync(User);
-            currentUser.FriendIDs.Add(user.Id);
+            if(currentUser.AddFriend(newUser) == false)
+                return "User already on your friend list";
             await _dbContext.SaveChangesAsync();
 
 

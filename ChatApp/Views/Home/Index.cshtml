@@ -6,24 +6,26 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-@section Scripts
-{
-    <script>
-        function AddFriend_Click() {
-            $.post("/Friends/Add", { Username: $("#AddFriendUsername").val() }, function (result) {
-                alert(result);
-            });
-        }
 
-        $(document).ready(function () {
-            $.post("/Account/UpdateActiveTime");
-            setInterval(function () {
-                $.post("/Account/UpdateActiveTime");
-            }, 30000)
-        });
+<style>
+    html{
+        height:100%;
+    }
 
-    </script>
-}
+    body
+    {
+        height:100%;
+        overflow:hidden;
+        display:flex;
+        flex-direction:column;
+    }
+
+    main
+    {
+        flex:1;
+    }
+</style>
+
 
 @if (!_signInManager.IsSignedIn(User))
 {
@@ -34,18 +36,78 @@
 }
 else
 {
-    <div class="row">
-        <div class="col-2">
 
-            <div class="form-inline">
+    @section Scripts
+{
+        <script>
+            function AddFriend_Click() {
+                $.post("/Friends/Add", { Username: $("#AddFriendUsername").val() }, function (result) {
+                    if (result !== "")
+                        alert(result);
+                });
+            }
 
-                <input id="AddFriendUsername" class="form-control" type="text" name="AddFriendUsername" placeholder="Username" />
+            function UpdateFriendList() {
+                $.getJSON("/Friends/GetFriends").done(function (result) {
+                    var friendList = $("#FriendList");
+                    friendList.children().not("#FriendRowTemplate").remove();
+                    var template = $("#FriendRowTemplate");
 
-                <button class="btn btn-primary" onclick="AddFriend_Click()">Add User</button>
+                    result.forEach(function (current) {
+                        var newRow = template.clone();
+                        newRow.removeAttr("id");
+                        newRow.removeAttr("style");
+                        newRow.text(current["username"]);
+                        friendList.append(newRow);
+                    });
+                });
+            }
 
+            $(document).ready(function () {
+                $.post("/Account/UpdateActiveTime");
+                UpdateFriendList();
+
+
+                setInterval(function () {
+                    $.post("/Account/UpdateActiveTime");
+                }, 30000)
+
+                setInterval(function () {
+                    UpdateFriendList();
+                }, 60000);
+            });
+
+        </script>
+    }
+
+    <div class="row h-100">
+        <div class="col-2 border-right">
+            <div class="pl-2">
+                <div class="form-inline input-group">
+                    <input id="AddFriendUsername" class="form-control" type="text" name="AddFriendUsername" placeholder="Username" />
+                    <button class="btn btn-primary" onclick="AddFriend_Click()">Add User</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        Friends
+                    </div>
+                    <ul id="FriendList" class="list-group list-group-flush">
+                        <li id="FriendRowTemplate" class="list-group-item" style="display:none;">Matthew Gardiner</li>
+
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+        <div class="col-8">
+            <div style="height:90%">test test test</div>
+            <div>
+                <input type="text" id="txtMessageInput" class="form-control" placeholder="Type a message..."/>
             </div>
         </div>
-        <div class="col-10">
+
+        <div class="col-2">
 
         </div>
     </div>
