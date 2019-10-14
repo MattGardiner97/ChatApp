@@ -41,19 +41,18 @@ namespace ChatApp.Controllers
 
         public async Task<Friend[]> GetFriends()
         {
-            //ChatUser currentUser = await _userManager.GetUserAsync(User);
             int currentUserID = GetCurrentUserID();
             var result = _dbContext.Users.Include(user => user.Friendships).ThenInclude(fs => fs.Friend).Single(x => x.Id == currentUserID);
             return result.Friendships.Select(x => new Friend(x.FriendID, x.Friend.UserName, x.Friend.LastActive)).ToArray();
-
-            throw new Exception();
-            return null;
         }
 
         public async Task<string> Add(string Username)
         {
             ChatUser owner = await _userManager.GetUserAsync(User);
+
             ChatUser friend = await _userManager.FindByNameAsync(Username);
+            if (friend == null)
+                return "User does not exist";
 
             Friendship ownerFriendship = new Friendship(owner, friend);
             Friendship otherFriendship = new Friendship(friend, owner);
@@ -61,8 +60,6 @@ namespace ChatApp.Controllers
             _dbContext.Friendships.Add(ownerFriendship);
             _dbContext.Friendships.Add(otherFriendship);
             await _dbContext.SaveChangesAsync();
-
-            throw new Exception();
 
 
             return "";
