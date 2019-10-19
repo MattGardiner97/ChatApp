@@ -24,5 +24,11 @@ namespace ChatApp.Models
             this.Friend = Friend;
         }
 
+        public Friendship(int OwnerID, int FriendID)
+        {
+            this.OwnerID = OwnerID;
+            this.FriendID = FriendID;
+        }
+
     }
 }

@@ -10,7 +10,6 @@ namespace ChatApp.Models
 {
     public class ChatUser : IdentityUser<int>
     {
-        public List<Friendship> Friendships { get; set; }
         public DateTime LastActive { get; set; }
     }
 }

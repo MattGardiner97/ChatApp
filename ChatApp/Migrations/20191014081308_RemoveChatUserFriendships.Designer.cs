@@ -4,14 +4,16 @@ using ChatApp.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace ChatApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20191014081308_RemoveChatUserFriendships")]
+    partial class RemoveChatUserFriendships
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -89,30 +91,6 @@ namespace ChatApp.Migrations
                     b.ToTable("AspNetUsers");
                 });
 
-            modelBuilder.Entity("ChatApp.Models.Conversation", b =>
-                {
-                    b.Property<int>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<int>("User1ID")
-                        .HasColumnType("int");
-
-                    b.Property<int>("User1LastReadMessage")
-                        .HasColumnType("int");
-
-                    b.Property<int>("User2ID")
-                        .HasColumnType("int");
-
-                    b.Property<int>("User2LastReadMessage")
-                        .HasColumnType("int");
-
-                    b.HasKey("ID");
-
-                    b.ToTable("Conversations");
-                });
-
             modelBuilder.Entity("ChatApp.Models.Friendship", b =>
                 {
                     b.Property<int>("ID")
@@ -145,7 +123,7 @@ namespace ChatApp.Migrations
                     b.Property<string>("Contents")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("ConversationID")
+                    b.Property<int>("RecipientID")
                         .HasColumnType("int");
 
                     b.Property<int>("SenderID")

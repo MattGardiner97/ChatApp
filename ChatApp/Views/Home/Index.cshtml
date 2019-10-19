@@ -8,21 +8,19 @@
 
 
 <style>
-    html{
-        height:100%;
+    html {
+        height: 100%;
     }
 
-    body
-    {
-        height:100%;
-        overflow:hidden;
-        display:flex;
-        flex-direction:column;
+    body {
+        height: 100%;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
     }
 
-    main
-    {
-        flex:1;
+    main {
+        flex: 1;
     }
 </style>
 
@@ -40,10 +38,73 @@ else
     @section Scripts
 {
         <script>
+            var _currentConversationID = 0;
+            var _conversations = new Object();
+
+            //Event Handlers
             function AddFriend_Click() {
                 $.post("/Friends/Add", { Username: $("#AddFriendUsername").val() }, function (result) {
                     if (result !== "")
                         alert(result);
+                });
+            }
+
+            function FriendListItem_Clicked(object) {
+                OpenFriendChat($(object).attr("data-id"));
+            }
+
+            function btnSend_Click(object) {
+                $("#txtMessageInput").focus();
+                var data = new Object();
+                data.ConversationID = _currentConversationID;
+                data.Message = $("#txtMessageInput").val();
+                $.post("/messages/sendmessage", data);
+            }
+
+
+            //User functions
+            async function OpenFriendChat(friendID) {
+                $("#ChatPanel").children().remove();
+
+                _currentConversationID = await GetConversationID(friendID);
+
+                GetMessagesForCurrentChat();
+            }
+
+            function GetMessagesForCurrentChat() {
+                var messages = $.getJSON("/messages/getmessages?conversationid=" + _currentConversationID);
+                if (_conversations[_currentConversationID] == null)
+                    _conversations[_currentConversationID] = new Object();
+
+                foreach(m in messages)
+                {
+                    if (_conversations[_currentConversationID][m.ID] != null)
+                        continue;
+
+                    _conversations[_currentConversationID][m.ID] = new Object();
+                    _conversations[_currentConversationID][m.ID].sid = m.SenderID;
+                    _conversations[_currentConversationID][m.ID].msg = m.Contents;
+                    _conversations[_currentConversationID][m.ID].ts = m.Timestamp;
+                }
+            }
+
+            function GetConversationID(friendID, resultID) {
+                var storageKey = "friend" + friendID + "convID";
+
+                return new Promise(resolve => {
+                    var convID = window.localStorage[storageKey];
+                    if (convID != null) {
+                        resultID = convID;
+                        resolve(resultID)
+                    }
+                    else {
+                        $.get("/messages/getconversationid?userid=" + friendID, function (result) {
+                            window.localStorage[storageKey] = result;
+                            resultID = result;
+                            resolve(resultID);
+                        });
+
+                    }
                 });
             }
 
@@ -56,12 +117,15 @@ else
                     result.forEach(function (current) {
                         var newRow = template.clone();
                         newRow.removeAttr("id");
-                        newRow.removeAttr("style");
+                        newRow.css("display", "initial");
                         newRow.text(current["username"]);
+                        newRow.attr("data-id", current.id);
                         friendList.append(newRow);
                     });
                 });
             }
+
+
 
             $(document).ready(function () {
                 $.post("/Account/UpdateActiveTime");
@@ -93,22 +157,24 @@ else
                         Friends
                     </div>
                     <ul id="FriendList" class="list-group list-group-flush">
-                        <li id="FriendRowTemplate" class="list-group-item" style="display:none;">Matthew Gardiner</li>
+                        <li id="FriendRowTemplate" class="list-group-item" style="display:none;cursor:pointer" onclick="FriendListItem_Clicked(this)"></li>
 
                     </ul>
                 </div>
             </div>
 
         </div>
-        <div class="col-8">
-            <div style="height:90%">test test test</div>
-            <div>
-                <input type="text" id="txtMessageInput" class="form-control" placeholder="Type a message..."/>
+        <div class="col-10">
+            <div style="height:95%" id="ChatPanel">
+
+
+
             </div>
-        </div>
-
-        <div class="col-2">
-
+            <div class="mr-3 d-flex">
+                <input type="hidden" id="CurrentConversationID" />
+                <input type="text" id="txtMessageInput" class="form-control flex-grow-1 mr-2" placeholder="Type a message..." autocomplete="off" />
+                <button id="btnSendMessage" class="btn-primary form-control" style="width:10%" onclick="btnSend_Click(this)">Send</button>
+            </div>
         </div>
     </div>
 }

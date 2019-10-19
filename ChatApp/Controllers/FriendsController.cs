@@ -42,20 +42,27 @@ namespace ChatApp.Controllers
         public async Task<Friend[]> GetFriends()
         {
             int currentUserID = GetCurrentUserID();
-            var result = _dbContext.Users.Include(user => user.Friendships).ThenInclude(fs => fs.Friend).Single(x => x.Id == currentUserID);
-            return result.Friendships.Select(x => new Friend(x.FriendID, x.Friend.UserName, x.Friend.LastActive)).ToArray();
+            var query = _dbContext.Friendships
+                .Where(x => x.OwnerID == currentUserID)
+                .Select(x => new Friend(x.FriendID,x.Friend.UserName,x.Friend.LastActive))
+                .AsNoTracking();
+            return await query.ToArrayAsync();
         }
 
         public async Task<string> Add(string Username)
         {
-            ChatUser owner = await _userManager.GetUserAsync(User);
+            int currentID = Helpers.GetCurrentUserID(User);
+            int friendID = await _dbContext.Users.Where(x => x.UserName == Username).Select(x => x.Id).FirstOrDefaultAsync();
 
-            ChatUser friend = await _userManager.FindByNameAsync(Username);
-            if (friend == null)
+            if (friendID == 0)
                 return "User does not exist";
 
-            Friendship ownerFriendship = new Friendship(owner, friend);
-            Friendship otherFriendship = new Friendship(friend, owner);
+            int existingCount = await _dbContext.Friendships.CountAsync(x => x.OwnerID == currentID && x.FriendID == friendID);
+            if (existingCount > 0)
+                return "User is already on your friend list";
+
+            Friendship ownerFriendship = new Friendship(currentID,friendID);
+            Friendship otherFriendship = new Friendship(friendID,currentID);
 
             _dbContext.Friendships.Add(ownerFriendship);
             _dbContext.Friendships.Add(otherFriendship);

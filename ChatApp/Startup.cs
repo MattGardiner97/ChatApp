@@ -12,6 +12,7 @@ using ChatApp.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace ChatApp
 {
@@ -24,12 +25,22 @@ namespace ChatApp
 
         public IConfiguration Configuration { get; }
 
+        public static readonly ILoggerFactory _logFactory = LoggerFactory.Create(b =>
+        {
+            b
+            .AddFilter((c, l) =>
+                c == DbLoggerCategory.Database.Command.Name
+            )
+            .AddConsole();
+        });
+
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
-                    Configuration.GetConnectionString("DefaultConnection")));
+                    Configuration.GetConnectionString("DefaultConnection"))
+                .UseLoggerFactory(_logFactory));
             services.AddDefaultIdentity<Models.ChatUser>(options =>
             {
                 //Set password requirements
@@ -42,6 +53,7 @@ namespace ChatApp
                 .AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddControllersWithViews();
             services.AddRazorPages();
+            services.AddScoped<MessageService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
