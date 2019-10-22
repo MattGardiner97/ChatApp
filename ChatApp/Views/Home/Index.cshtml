@@ -38,7 +38,7 @@ else
     @section Scripts
 {
         <script>
-            var _currentConversationID = 0;
+            var _currentFriendID = 0;
             var _conversations = new Object();
 
             //Event Handlers
@@ -64,47 +64,47 @@ else
 
             //User functions
             async function OpenFriendChat(friendID) {
+                alert("fix friend ID here");
+
                 $("#ChatPanel").children().remove();
 
-                _currentConversationID = await GetConversationID(friendID);
+                _currentFriendID = await GetConversationID(friendID);
 
-                GetMessagesForCurrentChat();
+                await GetMessagesForCurrentChat();
+
+                DisplayMessagesForCurrentChat();
             }
 
             function GetMessagesForCurrentChat() {
-                var messages = $.getJSON("/messages/getmessages?conversationid=" + _currentConversationID);
-                if (_conversations[_currentConversationID] == null)
-                    _conversations[_currentConversationID] = new Object();
-
-                foreach(m in messages)
-                {
-                    if (_conversations[_currentConversationID][m.ID] != null)
-                        continue;
-
-                    _conversations[_currentConversationID][m.ID] = new Object();
-                    _conversations[_currentConversationID][m.ID].sid = m.SenderID;
-                    _conversations[_currentConversationID][m.ID].msg = m.Contents;
-                    _conversations[_currentConversationID][m.ID].ts = m.Timestamp;
-                }
-            }
-
-            function GetConversationID(friendID, resultID) {
-                var storageKey = "friend" + friendID + "convID";
-
                 return new Promise(resolve => {
-                    var convID = window.localStorage[storageKey];
-                    if (convID != null) {
-                        resultID = convID;
-                        resolve(resultID)
-                    }
-                    else {
-                        $.get("/messages/getconversationid?userid=" + friendID, function (result) {
-                            window.localStorage[storageKey] = result;
-                            resultID = result;
-                            resolve(resultID);
+
+                    $.getJSON("/messages/getmessages?conversationid=" + _currentConversationID, function (messages) {
+                        if (_conversations[_currentConversationID] == null)
+                            _conversations[_currentConversationID] = new Object();
+
+                        messages.forEach(function (m) {
+                            if (_conversations[_currentConversationID][m.id] != null)
+                                return;
+
+                            _conversations[_currentConversationID][m.id] = new Object();
+                            _conversations[_currentConversationID][m.id].sid = m.senderID;
+                            _conversations[_currentConversationID][m.id].msg = m.contents;
+                            _conversations[_currentConversationID][m.id].ts = m.timestamp;
                         });
 
-                    }
+                        resolve();
+                    });
+                });
+            }
+
+            function GetNewMessages() {
+                $.get("/messages/getnewmessages", function (result) {
+                    result.forEach(function (msg) {
+                        var id = msg.senderID;
+                        var row = $(".friendListItem[data-id=" + id + "]");
+                        row.css("font-weight", "bold");
+                        
+                    });
                 });
             }
 
@@ -117,6 +117,7 @@ else
                     result.forEach(function (current) {
                         var newRow = template.clone();
                         newRow.removeAttr("id");
+                        newRow.addClass("friendListItem");
                         newRow.css("display", "initial");
                         newRow.text(current["username"]);
                         newRow.attr("data-id", current.id);
@@ -125,6 +126,9 @@ else
                 });
             }
 
+            function DisplayMessagesForCurrentChat() {
+
+            }
 
 
             $(document).ready(function () {
@@ -139,13 +143,58 @@ else
                 setInterval(function () {
                     UpdateFriendList();
                 }, 60000);
+
+                GetNewMessages();
             });
 
         </script>
     }
 
+    <style>
+        .chatContainer {
+            height: 95%;
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 auto;
+        }
+
+        .messageLine {
+            display: flex;
+            flex-direction: row;
+            margin-bottom:5%;
+        }
+
+        .userMessageSpacer {
+            flex-shrink: 1;
+            flex-grow: 1;
+            display: block;
+        }
+
+        .message {
+            padding: 10px 20px 10px 20px;
+            border-radius:48px;
+            min-width:4%;
+            text-align:center;
+            max-width:75%;
+            text-align:left;
+        }
+
+        .userMessage {
+            margin-right: 2%;
+            background-color: deepskyblue;
+            color: white;
+            flex-direction: row-reverse;
+        }
+
+        .friendMessage {
+            margin-left: 2%;
+            background-color: #e5e5e5;
+            color: black;
+        }
+    </style>
+
     <div class="row h-100">
-        <div class="col-2 border-right">
+        <div class="col-4 col-md-3 border-right">
             <div class="pl-2">
                 <div class="form-inline input-group">
                     <input id="AddFriendUsername" class="form-control" type="text" name="AddFriendUsername" placeholder="Username" />
@@ -164,16 +213,37 @@ else
             </div>
 
         </div>
-        <div class="col-10">
-            <div style="height:95%" id="ChatPanel">
+        <div class="col-8 col-md-9 pl-0 d-flex flex-column mb-2">
+            <div id="ChatPanel" class="chatContainer">
+                <div class="messageLine">
+                    <div class="userMessageSpacer"></div>
+                    <div class="message userMessage">Hello</div>
+                </div>
 
+                <div class="messageLine">
+                    <div class="message friendMessage">
+                        Hello there
+                    </div>
+                </div>
+
+                <div class="messageLine">
+                    <div class="userMessageSpacer"></div>
+                    <div class="message userMessage">
+                        How are you? What time did you want to go the movies? I was thinking about 3.
+                    </div>
+                </div>
+
+                <div class="messageLine">
+                    <div class="message friendMessage">
+                        Not too bad and yourself?
+                    </div>
+                </div>
 
 
             </div>
             <div class="mr-3 d-flex">
-                <input type="hidden" id="CurrentConversationID" />
                 <input type="text" id="txtMessageInput" class="form-control flex-grow-1 mr-2" placeholder="Type a message..." autocomplete="off" />
-                <button id="btnSendMessage" class="btn-primary form-control" style="width:10%" onclick="btnSend_Click(this)">Send</button>
+                <button id="btnSendMessage" class="btn-primary form-control" style="max-width:100px;flex-shrink:1;" onclick="btnSend_Click(this)">Send</button>
             </div>
         </div>
     </div>

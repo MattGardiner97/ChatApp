@@ -22,41 +22,38 @@ namespace ChatApp.Controllers
             _dbContext = DBContext;
         }
 
-        [HttpGet]
-        public async Task<int> GetConversationID(int UserID)
-        {
-            int currentID = Helpers.GetCurrentUserID(User);
-
-            int lowID = currentID < UserID ? currentID : UserID;
-            int highID = currentID > UserID ? currentID : UserID;
-
-            var result = await _dbContext.Conversations.Where(x => x.User1ID == lowID && x.User2ID == highID).Take(1).AsNoTracking().FirstOrDefaultAsync();
-            if (result == null)
-            {
-                result = new Conversation()
-                {
-                    User1ID = lowID,
-                    User2ID = highID
-                };
-                _dbContext.Conversations.Add(result);
-                await _dbContext.SaveChangesAsync();
-            }
-
-            return result.ID;
-        }
-
         [HttpPost]
-        public async Task<string> SendMessage(int ConversationID, string Message)
+        public async Task<string> SendMessage(int FriendID, string Message)
         {
             int senderID = Helpers.GetCurrentUserID(User);
-            string result = await _messageService.SendMessage(ConversationID, senderID, Message);
+            string result = await _messageService.SendMessage(senderID, FriendID, Message);
+            return "";
+        }
+
+        [HttpGet]
+        public async Task<Message[]> GetMessages(int FriendID, DateTime Before)
+        {
+            return null;
+        }
+
+        [HttpGet]
+        public async Task<Message[]> GetRecentMessages()
+        {
+            int userID = Helpers.GetCurrentUserID(User);
+            Message[] result = await _messageService.GetAllRecentMessages(userID);
             return result;
         }
 
         [HttpGet]
-        public async Task<Message[]> GetMessages(int ConversationID)
+        public async Task<Message[]> GetNewMessages(DateTime LastCheckTime = default)
         {
-            var result = await _messageService.GetMessages(ConversationID);
+            int userID = Helpers.GetCurrentUserID(User);
+
+            if (LastCheckTime == default)
+                LastCheckTime = await _dbContext.Users.Where(user => user.Id == userID).AsNoTracking().Select(u => u.LastMessageCheckTime).FirstOrDefaultAsync();
+
+
+            var result = await _messageService.GetNewMessages(userID, LastCheckTime);
             return result;
         }
     }

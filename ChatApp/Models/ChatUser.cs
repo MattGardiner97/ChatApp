@@ -11,5 +11,6 @@ namespace ChatApp.Models
     public class ChatUser : IdentityUser<int>
     {
         public DateTime LastActive { get; set; }
+        public DateTime LastMessageCheckTime { get; set; }
     }
 }

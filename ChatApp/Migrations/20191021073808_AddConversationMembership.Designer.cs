@@ -4,14 +4,16 @@ using ChatApp.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace ChatApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20191021073808_AddConversationMembership")]
+    partial class AddConversationMembership
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -41,9 +43,6 @@ namespace ChatApp.Migrations
                         .HasColumnType("bit");
 
                     b.Property<DateTime>("LastActive")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("LastMessageCheckTime")
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("LockoutEnabled")
@@ -92,6 +91,36 @@ namespace ChatApp.Migrations
                     b.ToTable("AspNetUsers");
                 });
 
+            modelBuilder.Entity("ChatApp.Models.Conversation", b =>
+                {
+                    b.Property<int>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.HasKey("ID");
+
+                    b.ToTable("Conversations");
+                });
+
+            modelBuilder.Entity("ChatApp.Models.ConversationMembership", b =>
+                {
+                    b.Property<int>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("ConversationID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserID")
+                        .HasColumnType("int");
+
+                    b.HasKey("ID");
+
+                    b.ToTable("ConversationMemberships");
+                });
+
             modelBuilder.Entity("ChatApp.Models.Friendship", b =>
                 {
                     b.Property<int>("ID")
@@ -124,7 +153,7 @@ namespace ChatApp.Migrations
                     b.Property<string>("Contents")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("RecipientID")
+                    b.Property<int>("ConversationID")
                         .HasColumnType("int");
 
                     b.Property<int>("SenderID")

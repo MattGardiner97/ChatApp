@@ -13,7 +13,6 @@ namespace ChatApp.Data
     {
         public DbSet<Friendship> Friendships { get; set; }
         public DbSet<Message> Messages { get; set; }
-        public DbSet<Conversation> Conversations { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
@@ -23,6 +22,8 @@ namespace ChatApp.Data
         protected override void OnModelCreating(ModelBuilder b)
         {
             b.Entity<ChatUser>().HasKey(f => f.Id);
+            b.Entity<Message>().HasKey(msg => msg.ID);
+
             b.Entity<Friendship>().HasOne(f => f.Owner).WithMany().HasForeignKey(f => f.OwnerID).OnDelete(DeleteBehavior.NoAction);
             b.Entity<Friendship>().HasOne(f => f.Friend).WithMany().HasForeignKey(f => f.FriendID);
 
