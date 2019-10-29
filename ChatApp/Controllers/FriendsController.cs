@@ -16,13 +16,13 @@ namespace ChatApp.Controllers
     [Authorize]
     public class FriendsController : Controller
     {
-        public class Friend
+        public class FriendViewModel
         {
             public int ID { get; set; }
             public string Username { get; set; }
             public DateTime LastActive { get; set; }
 
-            public Friend(int ID, string Username, DateTime LastActive)
+            public FriendViewModel(int ID, string Username, DateTime LastActive)
             {
                 this.ID = ID;
                 this.Username = Username;
@@ -39,16 +39,18 @@ namespace ChatApp.Controllers
             _dbContext = DbContext;
         }
 
-        public async Task<Friend[]> GetFriends()
+        [HttpGet]
+        public async Task<FriendViewModel[]> GetFriends()
         {
-            int currentUserID = GetCurrentUserID();
+            int currentUserID = Helpers.GetCurrentUserID(User);
             var query = _dbContext.Friendships
                 .Where(x => x.OwnerID == currentUserID)
-                .Select(x => new Friend(x.FriendID,x.Friend.UserName,x.Friend.LastActive))
+                .Select(x => new FriendViewModel(x.FriendID,x.Friend.UserName,x.Friend.LastActive))
                 .AsNoTracking();
             return await query.ToArrayAsync();
         }
 
+        [HttpPost]
         public async Task<string> Add(string Username)
         {
             int currentID = Helpers.GetCurrentUserID(User);
@@ -70,11 +72,6 @@ namespace ChatApp.Controllers
 
 
             return "";
-        }
-
-        private int GetCurrentUserID()
-        {
-            return int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
         }
 
     }

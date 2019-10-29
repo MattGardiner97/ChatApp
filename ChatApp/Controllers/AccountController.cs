@@ -92,7 +92,6 @@ namespace ChatApp.Controllers
             user.LastActive = DateTime.UtcNow;
             _dbContext.Users.Update(user);
             await _dbContext.SaveChangesAsync();
-            ;
         }
     }
 }

@@ -22,6 +22,51 @@
     main {
         flex: 1;
     }
+
+    .chatContainer {
+            height: 95%;
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 0;
+            overflow-y: scroll;
+        }
+
+        .messageLine {
+            display: flex;
+            flex-direction: row;
+        }
+
+        .userMessageSpacer {
+            flex-shrink: 1;
+            flex-grow: 1;
+            display: block;
+        }
+
+        .message {
+            padding: 10px 20px 10px 20px;
+            border-radius: 48px;
+            min-width: 4%;
+            text-align: center;
+            max-width: 75%;
+            text-align: left;
+        }
+
+        .userMessage {
+            margin-right: 2%;
+            background-color: deepskyblue;
+            color: white;
+            flex-direction: row-reverse;
+        }
+
+        .friendMessage {
+            margin-left: 2%;
+            background-color: #e5e5e5;
+            color: black;
+        }
+
+        .friendListItem {
+            cursor: pointer;
+        }
 </style>
 
 <script src="~/js/ChatWindow.js"></script>
@@ -56,27 +101,6 @@ else
             function FriendListItem_Clicked(object) {
                 OpenFriendChat($(object).attr("data-id"));
             }
-
-            //function btnSend_Click(object) {
-            //    $("#txtMessageInput").focus();
-            //    CreateTempMessageRow($("#txtMessageInput").val());
-            //    ScrollToChatWindowBottom();
-
-            //    var data = new Object();
-            //    data.FriendID = _currentFriendID;
-            //    data.Message = $("#txtMessageInput").val();
-            //    $.post("/messages/sendmessage", data, function (result) {
-            //        _messages.push(result);
-            //        var tRow = $("#TempMessageRow");
-            //        tRow.removeAttr("id");
-            //        tRow.attr("data-id", result.id);
-            //    });
-
-            //    $("#txtMessageInput").val("");
-            //}
-
-
-
 
             //User functions
             async function OpenFriendChat(friendID) {
@@ -167,53 +191,6 @@ else
 
         </script>
     }
-
-    <style>
-        .chatContainer {
-            height: 95%;
-            display: flex;
-            flex-direction: column;
-            flex: 1 1 0;
-            overflow-y: scroll;
-        }
-
-        .messageLine {
-            display: flex;
-            flex-direction: row;
-        }
-
-        .userMessageSpacer {
-            flex-shrink: 1;
-            flex-grow: 1;
-            display: block;
-        }
-
-        .message {
-            padding: 10px 20px 10px 20px;
-            border-radius: 48px;
-            min-width: 4%;
-            text-align: center;
-            max-width: 75%;
-            text-align: left;
-        }
-
-        .userMessage {
-            margin-right: 2%;
-            background-color: deepskyblue;
-            color: white;
-            flex-direction: row-reverse;
-        }
-
-        .friendMessage {
-            margin-left: 2%;
-            background-color: #e5e5e5;
-            color: black;
-        }
-
-        .friendListItem {
-            cursor: pointer;
-        }
-    </style>
 
     <div class="row h-100">
         <div class="col-4 col-md-3 border-right">
