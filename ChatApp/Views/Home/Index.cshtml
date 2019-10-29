@@ -24,6 +24,8 @@
     }
 </style>
 
+<script src="~/js/ChatWindow.js"></script>
+
 
 @if (!_signInManager.IsSignedIn(User))
 {
@@ -38,8 +40,10 @@ else
     @section Scripts
 {
         <script>
-            var _currentFriendID = 0;
-            var _conversations = new Object();
+            var _chatWindow = null;
+
+            var _messages = [];
+            var _lastMessageCheckTime = new Date(0);
 
             //Event Handlers
             function AddFriend_Click() {
@@ -53,98 +57,112 @@ else
                 OpenFriendChat($(object).attr("data-id"));
             }
 
-            function btnSend_Click(object) {
-                $("#txtMessageInput").focus();
-                var data = new Object();
-                data.ConversationID = _currentConversationID;
-                data.Message = $("#txtMessageInput").val();
-                $.post("/messages/sendmessage", data);
-            }
+            //function btnSend_Click(object) {
+            //    $("#txtMessageInput").focus();
+            //    CreateTempMessageRow($("#txtMessageInput").val());
+            //    ScrollToChatWindowBottom();
+
+            //    var data = new Object();
+            //    data.FriendID = _currentFriendID;
+            //    data.Message = $("#txtMessageInput").val();
+            //    $.post("/messages/sendmessage", data, function (result) {
+            //        _messages.push(result);
+            //        var tRow = $("#TempMessageRow");
+            //        tRow.removeAttr("id");
+            //        tRow.attr("data-id", result.id);
+            //    });
+
+            //    $("#txtMessageInput").val("");
+            //}
+
+
 
 
             //User functions
             async function OpenFriendChat(friendID) {
-                alert("fix friend ID here");
+                _chatWindow.CurrentFriendID = friendID;
+                await GetMessagesForFriendID(friendID,true);
 
-                $("#ChatPanel").children().remove();
-
-                _currentFriendID = await GetConversationID(friendID);
-
-                await GetMessagesForCurrentChat();
-
-                DisplayMessagesForCurrentChat();
             }
 
-            function GetMessagesForCurrentChat() {
+            function GetMessagesForFriendID(ID, Scroll = false) {
                 return new Promise(resolve => {
+                    var data = { FriendID: ID };
+                    $.getJSON("/Messages/GetFriendMessagesBeforeTime", data, function (result) {
+                        var ids = _messages.map(msg => msg.id);
 
-                    $.getJSON("/messages/getmessages?conversationid=" + _currentConversationID, function (messages) {
-                        if (_conversations[_currentConversationID] == null)
-                            _conversations[_currentConversationID] = new Object();
-
-                        messages.forEach(function (m) {
-                            if (_conversations[_currentConversationID][m.id] != null)
-                                return;
-
-                            _conversations[_currentConversationID][m.id] = new Object();
-                            _conversations[_currentConversationID][m.id].sid = m.senderID;
-                            _conversations[_currentConversationID][m.id].msg = m.contents;
-                            _conversations[_currentConversationID][m.id].ts = m.timestamp;
+                        result.forEach(function (msg) {
+                            if (ids.includes(msg.id) == false)
+                                _messages.push(msg);
                         });
 
+                        _chatWindow.Render(Scroll);
                         resolve();
                     });
                 });
             }
 
             function GetNewMessages() {
-                $.get("/messages/getnewmessages", function (result) {
+                var data = {
+                    After: _lastMessageCheckTime
+                };
+                $.get("/Messages/GetMessagesAfterTime", data, function (result) {
                     result.forEach(function (msg) {
-                        var id = msg.senderID;
-                        var row = $(".friendListItem[data-id=" + id + "]");
-                        row.css("font-weight", "bold");
-                        
+                        if (msg.id != _chatWindow.CurrentFriendID)
+                            $(".friendListItem[data-id=" + msg.id + "]").css("font-weight", "bold");
+
+                        _messages.push(msg);
                     });
+
+                    _chatWindow.Render(true);
+                    _lastMessageCheckTime = new Date().toUTCString();
+
                 });
             }
 
             function UpdateFriendList() {
                 $.getJSON("/Friends/GetFriends").done(function (result) {
                     var friendList = $("#FriendList");
-                    friendList.children().not("#FriendRowTemplate").remove();
                     var template = $("#FriendRowTemplate");
+
+                    //Clear existing friend list entries
+                    friendList.children().not("#FriendRowTemplate").remove();
 
                     result.forEach(function (current) {
                         var newRow = template.clone();
-                        newRow.removeAttr("id");
-                        newRow.addClass("friendListItem");
-                        newRow.css("display", "initial");
-                        newRow.text(current["username"]);
-                        newRow.attr("data-id", current.id);
+                        newRow.removeAttr("id").removeAttr("style").text(current.username).attr("data-id", current.id);
                         friendList.append(newRow);
                     });
                 });
             }
 
-            function DisplayMessagesForCurrentChat() {
-
+            function SendMessage(Message) {
+                $.post("/messages/sendmessage", Message, function (result) {
+                    _messages.push(result);
+                    _chatWindow.UpdateTempMessageRow(result.id);
+                });
             }
 
+            function UpdateActiveTime() {
+                $.post("/Account/UpdateActiveTime");
+            }
 
             $(document).ready(function () {
-                $.post("/Account/UpdateActiveTime");
-                UpdateFriendList();
+                _chatWindow = new ChatWindow($("#ChatWindow"));
+                _chatWindow.SendMessageEvent = SendMessage;
 
+                var jobs = [
+                    { func: UpdateActiveTime, interval: 30000 },
+                    { func: UpdateFriendList, interval: 60000 },
+                    { func: GetNewMessages, interval: 2000 }
+                ];
 
-                setInterval(function () {
-                    $.post("/Account/UpdateActiveTime");
-                }, 30000)
+                jobs.forEach(function (job) {
+                    job.func();
 
-                setInterval(function () {
-                    UpdateFriendList();
-                }, 60000);
+                    setInterval(job.func, job.interval);
+                });
 
-                GetNewMessages();
             });
 
         </script>
@@ -155,13 +173,13 @@ else
             height: 95%;
             display: flex;
             flex-direction: column;
-            flex: 1 1 auto;
+            flex: 1 1 0;
+            overflow-y: scroll;
         }
 
         .messageLine {
             display: flex;
             flex-direction: row;
-            margin-bottom:5%;
         }
 
         .userMessageSpacer {
@@ -172,11 +190,11 @@ else
 
         .message {
             padding: 10px 20px 10px 20px;
-            border-radius:48px;
-            min-width:4%;
-            text-align:center;
-            max-width:75%;
-            text-align:left;
+            border-radius: 48px;
+            min-width: 4%;
+            text-align: center;
+            max-width: 75%;
+            text-align: left;
         }
 
         .userMessage {
@@ -190,6 +208,10 @@ else
             margin-left: 2%;
             background-color: #e5e5e5;
             color: black;
+        }
+
+        .friendListItem {
+            cursor: pointer;
         }
     </style>
 
@@ -206,44 +228,31 @@ else
                         Friends
                     </div>
                     <ul id="FriendList" class="list-group list-group-flush">
-                        <li id="FriendRowTemplate" class="list-group-item" style="display:none;cursor:pointer" onclick="FriendListItem_Clicked(this)"></li>
+                        <li id="FriendRowTemplate" class="list-group-item friendListItem" style="display:none;" onclick="FriendListItem_Clicked(this)"></li>
 
                     </ul>
                 </div>
             </div>
 
         </div>
-        <div class="col-8 col-md-9 pl-0 d-flex flex-column mb-2">
+        <div class="col-8 col-md-9 pl-0 d-flex flex-column mb-2" id="ChatWindow">
+            <div class="messageLine mb-2" style="display:none" id="UserMessageTemplate">
+                <div class="userMessageSpacer"></div>
+                <div class="message userMessage"></div>
+            </div>
+
+            <div class="messageLine mb-2" style="display:none;" id="FriendMessageTemplate">
+                <div class="message friendMessage">
+
+                </div>
+            </div>
             <div id="ChatPanel" class="chatContainer">
-                <div class="messageLine">
-                    <div class="userMessageSpacer"></div>
-                    <div class="message userMessage">Hello</div>
-                </div>
-
-                <div class="messageLine">
-                    <div class="message friendMessage">
-                        Hello there
-                    </div>
-                </div>
-
-                <div class="messageLine">
-                    <div class="userMessageSpacer"></div>
-                    <div class="message userMessage">
-                        How are you? What time did you want to go the movies? I was thinking about 3.
-                    </div>
-                </div>
-
-                <div class="messageLine">
-                    <div class="message friendMessage">
-                        Not too bad and yourself?
-                    </div>
-                </div>
 
 
             </div>
-            <div class="mr-3 d-flex">
+            <div id="InputRow" class="mr-3 d-flex" style="display:none!important">
                 <input type="text" id="txtMessageInput" class="form-control flex-grow-1 mr-2" placeholder="Type a message..." autocomplete="off" />
-                <button id="btnSendMessage" class="btn-primary form-control" style="max-width:100px;flex-shrink:1;" onclick="btnSend_Click(this)">Send</button>
+                <button id="btnSendMessage" class="btn-primary form-control" style="max-width:100px;flex-shrink:1;">Send</button>
             </div>
         </div>
     </div>

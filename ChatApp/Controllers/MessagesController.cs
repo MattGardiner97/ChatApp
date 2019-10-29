@@ -23,37 +23,26 @@ namespace ChatApp.Controllers
         }
 
         [HttpPost]
-        public async Task<string> SendMessage(int FriendID, string Message)
+        public async Task<Message> SendMessage(int FriendID, string Message)
         {
             int senderID = Helpers.GetCurrentUserID(User);
-            string result = await _messageService.SendMessage(senderID, FriendID, Message);
-            return "";
-        }
-
-        [HttpGet]
-        public async Task<Message[]> GetMessages(int FriendID, DateTime Before)
-        {
-            return null;
-        }
-
-        [HttpGet]
-        public async Task<Message[]> GetRecentMessages()
-        {
-            int userID = Helpers.GetCurrentUserID(User);
-            Message[] result = await _messageService.GetAllRecentMessages(userID);
+            Message result = await _messageService.SendMessage(senderID, FriendID, Message);
             return result;
         }
 
         [HttpGet]
-        public async Task<Message[]> GetNewMessages(DateTime LastCheckTime = default)
+        public async Task<Message[]> GetFriendMessagesBeforeTime(int FriendID, DateTime Before = default)
         {
             int userID = Helpers.GetCurrentUserID(User);
+            Message[] result = await _messageService.GetMessagesBeforeTime(userID,FriendID,Before);
+            return result;
+        }
 
-            if (LastCheckTime == default)
-                LastCheckTime = await _dbContext.Users.Where(user => user.Id == userID).AsNoTracking().Select(u => u.LastMessageCheckTime).FirstOrDefaultAsync();
-
-
-            var result = await _messageService.GetNewMessages(userID, LastCheckTime);
+        [HttpGet]
+        public async Task<Message[]> GetMessagesAfterTime(DateTimeOffset After)
+        {
+            int userID = Helpers.GetCurrentUserID(User);
+            var result = await _messageService.GetMessagesAfterTime(userID, After.UtcDateTime);
             return result;
         }
     }

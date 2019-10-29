@@ -19,7 +19,7 @@ namespace ChatApp
             _dbContext = DBContext;
         }
 
-        public async Task<string> SendMessage(int SenderID, int RecipientID, string Contents)
+        public async Task<Message> SendMessage(int SenderID, int RecipientID, string Contents)
         {
             Message newMessage = new Message()
             {
@@ -31,7 +31,7 @@ namespace ChatApp
 
             _dbContext.Messages.Add(newMessage);
             await _dbContext.SaveChangesAsync();
-            return "";
+            return newMessage;
         }
 
         private async Task SetLastMessageCheckTime(int UserID)
@@ -44,41 +44,39 @@ namespace ChatApp
                     });
         }
 
-        //Gets messages which were sent while the user was offline
-        public async Task<Message[]> GetAllRecentMessages(int UserID)
+        public async Task<Message[]> GetMessagesBeforeTime(int UserID, int FriendID, DateTime Before = default)
         {
-            DateTime lastMessageCheckTime = await _dbContext.Users.Where(user => user.Id == UserID).Select(x => x.LastMessageCheckTime).FirstOrDefaultAsync();
+            if (Before == default)
+                Before = DateTime.UtcNow;
 
-            var query = _dbContext.Messages.Where(msg => msg.Timestamp > lastMessageCheckTime && (msg.RecipientID == UserID || msg.SenderID == UserID)).AsNoTracking();
-            var result = await query.ToArrayAsync();
+            var query = _dbContext.Messages
+                .Where(msg => msg.Timestamp < Before && ((msg.SenderID == UserID && msg.RecipientID == FriendID) || (msg.SenderID == FriendID && msg.RecipientID == UserID)))
+                .OrderByDescending(msg => msg.Timestamp)
+                .Take(20)
+                .AsNoTracking();
 
             await SetLastMessageCheckTime(UserID);
 
+            Message[] result = await query.ToArrayAsync();
             return result;
         }
 
-        public async Task<Message[]> GetMessagesBetweenUsers(int UserID, int FriendID, DateTime BeforeTime = default)
+        public async Task<Message[]> GetMessagesAfterTime(int UserID, DateTime After)
         {
-            if (BeforeTime == default)
-                BeforeTime = DateTime.UtcNow;
+            if (After == default)
+                After = await _dbContext.Users
+                    .Where(user => user.Id == UserID)
+                    .AsNoTracking()
+                    .Select(u => u.LastMessageCheckTime)
+                    .FirstOrDefaultAsync();
 
-            var query = _dbContext.Messages
-                .Where(msg => msg.Timestamp < BeforeTime && ((msg.SenderID == UserID && msg.RecipientID == FriendID) || (msg.SenderID == FriendID && msg.RecipientID == UserID)))
-                .AsNoTracking();
-
-            Message[] result = await query.ToArrayAsync();
             await SetLastMessageCheckTime(UserID);
-            return result;
-        }
 
-        public async Task<Message[]> GetNewMessages(int UserID, DateTime AfterTime)
-        {
             var query = _dbContext.Messages
-                .Where(msg => msg.Timestamp > AfterTime && msg.RecipientID == UserID)
+                .Where(msg => msg.Timestamp > After && msg.RecipientID == UserID)
                 .AsNoTracking();
             Message[] result = await query.ToArrayAsync();
 
-            await SetLastMessageCheckTime(UserID);
 
             return result;
         }
