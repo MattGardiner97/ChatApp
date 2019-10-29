@@ -21,6 +21,13 @@ namespace ChatApp
 
         public async Task<Message> SendMessage(int SenderID, int RecipientID, string Contents)
         {
+            if (string.IsNullOrEmpty(Contents))
+                return null;
+
+            int friendshipCount = await _dbContext.Friendships.Where(fs => fs.OwnerID == SenderID && fs.FriendID == RecipientID).CountAsync();
+            if (friendshipCount == 0)
+                return null;
+
             Message newMessage = new Message()
             {
                 SenderID = SenderID,
