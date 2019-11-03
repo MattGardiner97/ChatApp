@@ -24,51 +24,52 @@
     }
 
     .chatContainer {
-            height: 95%;
-            display: flex;
-            flex-direction: column;
-            flex: 1 1 0;
-            overflow-y: scroll;
-        }
+        height: 95%;
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 0;
+        overflow-y: scroll;
+    }
 
-        .messageLine {
-            display: flex;
-            flex-direction: row;
-        }
+    .messageLine {
+        display: flex;
+        flex-direction: row;
+    }
 
-        .userMessageSpacer {
-            flex-shrink: 1;
-            flex-grow: 1;
-            display: block;
-        }
+    .userMessageSpacer {
+        flex-shrink: 1;
+        flex-grow: 1;
+        display: block;
+    }
 
-        .message {
-            padding: 10px 20px 10px 20px;
-            border-radius: 48px;
-            min-width: 4%;
-            text-align: center;
-            max-width: 75%;
-            text-align: left;
-        }
+    .message {
+        padding: 10px 20px 10px 20px;
+        border-radius: 48px;
+        min-width: 4%;
+        text-align: center;
+        max-width: 75%;
+        text-align: left;
+    }
 
-        .userMessage {
-            margin-right: 2%;
-            background-color: deepskyblue;
-            color: white;
-            flex-direction: row-reverse;
-        }
+    .userMessage {
+        margin-right: 2%;
+        background-color: deepskyblue;
+        color: white;
+        flex-direction: row-reverse;
+    }
 
-        .friendMessage {
-            margin-left: 2%;
-            background-color: #e5e5e5;
-            color: black;
-        }
+    .friendMessage {
+        margin-left: 2%;
+        background-color: #e5e5e5;
+        color: black;
+    }
 
-        .friendListItem {
-            cursor: pointer;
-        }
+    .friendListItem {
+        cursor: pointer;
+    }
 </style>
 
+<script src="~/js/signalr/dist/browser/signalr.js"></script>
 <script src="~/js/ChatWindow.js"></script>
 
 
@@ -90,6 +91,8 @@ else
             var _messages = [];
             var _lastMessageCheckTime = new Date(0);
 
+            var connection = null;
+
             //Event Handlers
             function AddFriend_Click() {
                 $.post("/Friends/Add", { Username: $("#AddFriendUsername").val() }, function (result) {
@@ -105,7 +108,7 @@ else
             //User functions
             async function OpenFriendChat(friendID) {
                 _chatWindow.CurrentFriendID = friendID;
-                await GetMessagesForFriendID(friendID,true);
+                await GetMessagesForFriendID(friendID, true);
 
             }
 
@@ -161,10 +164,17 @@ else
             }
 
             function SendMessage(Message) {
-                $.post("/messages/sendmessage", Message, function (result) {
-                    _messages.push(result);
-                    _chatWindow.UpdateTempMessageRow(result.id);
-                });
+                connection.invoke("SendMessage", Message.RecipientID, Message.Contents);
+            }
+
+            function ReceiveMessage(msg) {
+                if (msg.id != _chatWindow.CurrentFriendID)
+                    $(".friendListItem[data-id=" + msg.id + "]").css("font-weight", "bold");
+
+                _messages.push(msg);
+
+                _chatWindow.Render(true);
+                _lastMessageCheckTime = new Date().toUTCString();
             }
 
             function UpdateActiveTime() {
@@ -177,8 +187,7 @@ else
 
                 var jobs = [
                     { func: UpdateActiveTime, interval: 30000 },
-                    { func: UpdateFriendList, interval: 60000 },
-                    { func: GetNewMessages, interval: 2000 }
+                    { func: UpdateFriendList, interval: 60000 }
                 ];
 
                 jobs.forEach(function (job) {
@@ -187,6 +196,9 @@ else
                     setInterval(job.func, job.interval);
                 });
 
+                connection = new signalR.HubConnectionBuilder().withUrl("chathub").build();
+                connection.on("ReceiveMessage", ReceiveMessage);
+                connection.start();
             });
 
         </script>

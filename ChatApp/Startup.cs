@@ -13,6 +13,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using ChatApp.Hubs;
 
 namespace ChatApp
 {
@@ -32,6 +33,7 @@ namespace ChatApp
                 c == DbLoggerCategory.Database.Command.Name
             )
             .AddConsole();
+
         });
 
         // This method gets called by the runtime. Use this method to add services to the container.
@@ -54,6 +56,10 @@ namespace ChatApp
             services.AddControllersWithViews();
             services.AddRazorPages();
             services.AddScoped<MessageService>();
+            services.AddSignalR(options =>
+            {
+                options.ClientTimeoutInterval = TimeSpan.FromMinutes(1);
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -84,6 +90,7 @@ namespace ChatApp
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
                 endpoints.MapRazorPages();
+                endpoints.MapHub<ChatHub>("/chathub");
             });
         }
     }

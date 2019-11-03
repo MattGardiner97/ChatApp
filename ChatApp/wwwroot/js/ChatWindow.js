@@ -47,7 +47,7 @@
         //Create a temporary message row so there is no delay in displaying a user message while waiting for the server to return an ID
         this.CreateTempMessageRow(contents);
 
-        var msg = { FriendID: this._currentFriendID, Message: contents };
+        var msg = { RecipientID: this._currentFriendID, Contents: contents };
         this.SendMessageEvent(msg);
     }
 
@@ -60,8 +60,8 @@
         this.ScrollToChatWindowBottom();
     }
 
-    UpdateTempMessageRow(MessageID) {
-        $(this.ChatWindow).find("#TempMessageRow").attr("data-id", MessageID).removeAttr("id");
+    RemoveTempMessageRow() {
+        $(this.ChatWindow).find("#TempMessageRow").remove();
     }
 
     ShowInputBar() {
@@ -94,6 +94,8 @@
     Render(ScrollToBottom) {
         if (this._currentFriendID === 0)
             return;
+
+        this.RemoveTempMessageRow();
 
         var _currentMessages = _messages.filter(msg => Number(msg.senderID) === Number(this._currentFriendID) || Number(msg.recipientID) === Number(this._currentFriendID));
         this.SortMessagesByDate(_currentMessages);
