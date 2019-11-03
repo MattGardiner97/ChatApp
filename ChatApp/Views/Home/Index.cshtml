@@ -89,7 +89,6 @@ else
             var _chatWindow = null;
 
             var _messages = [];
-            var _lastMessageCheckTime = new Date(0);
 
             var connection = null;
 
@@ -129,24 +128,6 @@ else
                 });
             }
 
-            function GetNewMessages() {
-                var data = {
-                    After: _lastMessageCheckTime
-                };
-                $.get("/Messages/GetMessagesAfterTime", data, function (result) {
-                    result.forEach(function (msg) {
-                        if (msg.id != _chatWindow.CurrentFriendID)
-                            $(".friendListItem[data-id=" + msg.id + "]").css("font-weight", "bold");
-
-                        _messages.push(msg);
-                    });
-
-                    _chatWindow.Render(true);
-                    _lastMessageCheckTime = new Date().toUTCString();
-
-                });
-            }
-
             function UpdateFriendList() {
                 $.getJSON("/Friends/GetFriends").done(function (result) {
                     var friendList = $("#FriendList");
@@ -163,6 +144,7 @@ else
                 });
             }
 
+            //ChatHub events
             function SendMessage(Message) {
                 connection.invoke("SendMessage", Message.RecipientID, Message.Contents);
             }
@@ -175,10 +157,6 @@ else
 
                 _chatWindow.Render(true);
                 _lastMessageCheckTime = new Date().toUTCString();
-            }
-
-            function UpdateActiveTime() {
-                $.post("/Account/UpdateActiveTime");
             }
 
             $(document).ready(function () {
