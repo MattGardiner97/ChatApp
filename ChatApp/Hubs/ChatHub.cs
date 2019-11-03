@@ -52,7 +52,15 @@ namespace ChatApp.Hubs
 
         public async Task GetUserOnlineStatus(string UserID)
         {
+            int userID = 0;
+            if (int.TryParse(UserID, out userID) == false)
+                throw new InvalidCastException("UserID should be a number");
 
+            DateTime lastActive = await _statusMonitorService.GetUserStatus(userID);
+            if (lastActive == new DateTime(0))
+                await Clients.Caller.SendAsync("ReceiveUserStatus", 0);
+            else
+                await Clients.Caller.SendAsync("ReceiveUserStatus", lastActive);
         }
 
     }

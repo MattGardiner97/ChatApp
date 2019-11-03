@@ -201,6 +201,9 @@ else
                 connection["KeepAliveInterval"] = 30;
                 connection.on("KeepAlive", function () { console.log("ChatHub KeepAlive") });
                 connection.on("ReceiveMessage", ReceiveMessage);
+                connection.on("ReceiveUserStatus", function (result) {
+                    
+                });
                 connection.start();
             });
 
