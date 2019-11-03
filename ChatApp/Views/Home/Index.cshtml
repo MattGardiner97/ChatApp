@@ -1,5 +1,5 @@
-﻿@inject Microsoft.AspNetCore.Identity.UserManager<ChatUser> _userManager
-@inject Microsoft.AspNetCore.Identity.SignInManager<ChatUser> _signInManager
+﻿@inject Microsoft.AspNetCore.Identity.UserManager<ChatUser>    _userManager
+@inject Microsoft.AspNetCore.Identity.SignInManager<ChatUser>        _signInManager
 
 @{
     ViewData["Title"] = "Home - ChatApp";
@@ -84,7 +84,7 @@ else
 {
 
     @section Scripts
-{
+        {
         <script>
             var _chatWindow = null;
 
@@ -197,6 +197,9 @@ else
                 });
 
                 connection = new signalR.HubConnectionBuilder().withUrl("chathub").build();
+                connection["ServerTimeout"] = 60;
+                connection["KeepAliveInterval"] = 30;
+                connection.on("KeepAlive", function () { console.log("ChatHub KeepAlive") });
                 connection.on("ReceiveMessage", ReceiveMessage);
                 connection.start();
             });

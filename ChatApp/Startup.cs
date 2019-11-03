@@ -59,7 +59,10 @@ namespace ChatApp
             services.AddSignalR(options =>
             {
                 options.ClientTimeoutInterval = TimeSpan.FromMinutes(1);
+                options.KeepAliveInterval = TimeSpan.FromSeconds(30);
             });
+
+            services.AddHostedService<ChatHubKeepAlive>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
