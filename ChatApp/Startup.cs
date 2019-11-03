@@ -62,6 +62,9 @@ namespace ChatApp
                 options.KeepAliveInterval = TimeSpan.FromSeconds(30);
             });
 
+            services.AddSingleton<IUserStatusStorageService, UserStatusStorageService>();
+            services.AddSingleton<IUserStatusMonitorService, UserStatusMonitorService>();
+
             services.AddHostedService<ChatHubKeepAlive>();
         }
 
