@@ -26,7 +26,7 @@ namespace ChatApp
 
         public IConfiguration Configuration { get; }
 
-        public static readonly ILoggerFactory _logFactory = LoggerFactory.Create(b =>
+        public static readonly ILoggerFactory LogFactory = LoggerFactory.Create(b =>
         {
             b
             .AddFilter((c, l) =>
@@ -42,7 +42,7 @@ namespace ChatApp
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection"))
-                .UseLoggerFactory(_logFactory));
+                .UseLoggerFactory(LogFactory));
             services.AddDefaultIdentity<Models.ChatUser>(options =>
             {
                 //Set password requirements
