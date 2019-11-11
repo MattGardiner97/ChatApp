@@ -67,6 +67,17 @@
     .friendListItem {
         cursor: pointer;
     }
+
+    .friendListItem.selected
+    {
+        background-color:#c0c0c0;
+        font-weight:bold;
+    }
+
+    .bg-primary
+    {
+        background-color:#1b6ec2!important;
+    }
 </style>
 
 <script src="~/js/signalr/dist/browser/signalr.js"></script>
@@ -87,9 +98,7 @@ else
         {
         <script>
             var _chatWindow = null;
-
             var _messages = [];
-
             var connection = null;
 
             //Event Handlers
@@ -101,6 +110,7 @@ else
             }
 
             function FriendListItem_Clicked(object) {
+                $(object).addClass("selected");
                 OpenFriendChat($(object).attr("data-id"));
             }
 
@@ -196,7 +206,7 @@ else
                 </div>
 
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header bg-primary text-white">
                         Friends
                     </div>
                     <ul id="FriendList" class="list-group list-group-flush">
