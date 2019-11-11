@@ -48,7 +48,11 @@ namespace ChatApp
                 //Set password requirements
                 options.Password = new PasswordOptions()
                 {
-                    RequiredLength = 6,
+                    RequiredLength = 8,
+                    RequireDigit = true,
+                    RequireLowercase = false,
+                    RequireNonAlphanumeric = false,
+                    RequireUppercase = false
 
                 };
             })
