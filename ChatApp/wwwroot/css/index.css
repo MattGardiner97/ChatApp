@@ -1,0 +1,68 @@
+﻿html {
+    height: 100%;
+}
+
+body {
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+.chatContainer {
+    height: 95%;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    overflow-y: scroll;
+}
+
+.messageLine {
+    display: flex;
+    flex-direction: row;
+}
+
+.userMessageSpacer {
+    flex-shrink: 1;
+    flex-grow: 1;
+    display: block;
+}
+
+.message {
+    padding: 10px 20px 10px 20px;
+    border-radius: 48px;
+    min-width: 4%;
+    text-align: center;
+    max-width: 75%;
+    text-align: left;
+}
+
+.userMessage {
+    margin-right: 2%;
+    background-color: deepskyblue;
+    color: white;
+    flex-direction: row-reverse;
+}
+
+.friendMessage {
+    margin-left: 2%;
+    background-color: #e5e5e5;
+    color: black;
+}
+
+.friendListItem {
+    cursor: pointer;
+}
+
+    .friendListItem.selected {
+        background-color: #c0c0c0;
+        font-weight: bold;
+    }
+
+.bg-primary {
+    background-color: #1b6ec2 !important;
+}
