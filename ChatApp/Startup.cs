@@ -26,23 +26,12 @@ namespace ChatApp
 
         public IConfiguration Configuration { get; }
 
-        public static readonly ILoggerFactory LogFactory = LoggerFactory.Create(b =>
-        {
-            b
-            .AddFilter((c, l) =>
-                c == DbLoggerCategory.Database.Command.Name
-            )
-            .AddConsole();
-
-        });
-
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(
-                    Configuration.GetConnectionString("DefaultConnection"))
-                .UseLoggerFactory(LogFactory));
+                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"))
+                );
             services.AddDefaultIdentity<Models.ChatUser>(options =>
             {
                 //Set password requirements
