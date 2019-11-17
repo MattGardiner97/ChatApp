@@ -18,13 +18,12 @@
         $(this.btnSend).click(this.btnSend_Click.bind(this));
         $(this.txtMessageInput).keydown(this.txtMessageInput_Keydown.bind(this));
 
-        //var parent = this;
         setInterval(function (parent) {
             if (Boolean($(parent.txtMessageInput).val()) === false)
                 $(parent.btnSend).removeClass("btn-primary").addClass("btn-disabled");
             else
                 $(parent.btnSend).removeClass("btn-disabled").addClass("btn-primary");
-        }, 125,this);
+        }, 125, this);
     }
 
     //Properties
