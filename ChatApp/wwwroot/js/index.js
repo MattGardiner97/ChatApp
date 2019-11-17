@@ -15,16 +15,33 @@ function FriendListItem_Clicked(object) {
     OpenFriendChat($(object).attr("data-id"));
 }
 
+function ChatPanel_Scrolled(sender) {
+    if (sender.scrollTop === 0) {
+        LoadPreviousMessages();
+    }
+}
+
 //User functions
 async function OpenFriendChat(friendID) {
     _chatWindow.CurrentFriendID = friendID;
-    await GetMessagesForFriendID(friendID, true);
+    await GetMessagesForFriendID(friendID, new Date(), true, false);
 
 }
 
-function GetMessagesForFriendID(ID, Scroll = false) {
+async function LoadPreviousMessages() {
+    var currentID = Number(_chatWindow._currentFriendID);
+    var currentChatMessages = _messages.filter(msg => msg.recipientID === currentID || msg.senderID === currentID);
+    currentChatMessages.sort(function (a, b) { if (a < b) { return 1; } if (a == b) { return 0; } else { return -1; } });
+
+    //var oldestMessageID = $("#ChatPanel .messageLine").first().data("id");
+    var oldestMessageTS = currentChatMessages[0].timestamp;
+    await GetMessagesForFriendID(currentID, oldestMessageTS, false, true);
+}
+
+
+function GetMessagesForFriendID(ID, BeforeTime, Scroll, Prepend) {
     return new Promise(resolve => {
-        var data = { FriendID: ID };
+        var data = { FriendID: ID, Before: BeforeTime };
         $.getJSON("/Messages/GetFriendMessagesBeforeTime", data, function (result) {
             var ids = _messages.map(msg => msg.id);
 
@@ -33,7 +50,7 @@ function GetMessagesForFriendID(ID, Scroll = false) {
                     _messages.push(msg);
             });
 
-            _chatWindow.Render(Scroll);
+            _chatWindow.Render(Scroll, Prepend);
             resolve();
         });
     });
@@ -66,7 +83,7 @@ function ReceiveMessage(msg) {
 
     _messages.push(msg);
 
-    _chatWindow.Render(true);
+    _chatWindow.Render(true, false);
     _lastMessageCheckTime = new Date().toUTCString();
 }
 

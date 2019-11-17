@@ -91,7 +91,7 @@
 
     }
 
-    Render(ScrollToBottom) {
+    Render(ScrollToBottom, Prepend) {
         if (this._currentFriendID === 0)
             return;
 
@@ -101,18 +101,33 @@
         this.SortMessagesByDate(_currentMessages);
         //This is needed because the foreach loop cannot reference the ChatWindow as 'this'
         var parent = this;
+        //This is used to prepend messages when Prepend==true
+        var firstMessage = $("#ChatPanel .messageLine").first();
+        var oldScroll = 0;
+        if (firstMessage.offset() != null)
+            oldScroll = firstMessage.offset().top;
         _currentMessages.forEach(function (msg) {
             if ($(parent.ChatPanel).find(".messageLine[data-id=" + msg.id + "]").length > 0)
                 return;
 
             var row = parent.CreateMessageRow(Number(msg.senderID) === Number(parent.CurrentFriendID));
             row.attr("data-id", msg.id).find(".message").text(msg.contents);
-            $(parent.ChatPanel).append(row);
+
+            if (Prepend === true)
+                row.insertBefore($(firstMessage));
+            else
+                $(parent.ChatPanel).append(row);
+
         });
 
         this.ShowInputBar();
         if (ScrollToBottom === true)
             this.ScrollToChatWindowBottom();
+
+        //If loading previous messages, use the current offset of the previously oldest message minus its new offset to prevent the panel from scrolling
+        //to the new first message
+        if (Prepend === true)
+            $(this.ChatPanel).animate({ scrollTop: $(firstMessage).offset().top - oldScroll }, 0);
     }
 
 
